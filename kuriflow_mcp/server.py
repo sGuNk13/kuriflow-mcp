@@ -120,10 +120,10 @@ mcp = FastMCP(
         "2. Script must use SPECIFIC filenames (never glob/wildcards)\n"
         "3. If user has template files, ask for full local path\n"
         "4. Ask how new data arrives:\n"
-        "   - EMAIL: fires when attachment arrives. Pass input_source=<email>. No schedule needed.\n"
-        "   - GOOGLE DRIVE: polls a folder on schedule. Pass input_source=<folder URL> + schedule=<cron>.\n"
-        "   - SCHEDULE ONLY: script fetches its own data. Pass schedule=<cron>.\n"
-        "   - NOTE: every workflow should have a trigger. If the user isn't sure, suggest a schedule.\n"
+        "   - EMAIL: fires AUTOMATICALLY when attachment arrives. Pass input_source=<email>. Do NOT pass schedule — email triggers have NO schedule. Do NOT ask the user about schedule.\n"
+        "   - GOOGLE DRIVE: polls a folder on schedule. Pass input_source=<folder URL> + schedule=<cron>. Ask user how often to check.\n"
+        "   - SCHEDULE ONLY: script fetches its own data. Pass schedule=<cron>. Ask user how often to run.\n"
+        "   IMPORTANT: email triggers and schedules are MUTUALLY EXCLUSIVE. If input is email, there is no schedule. Never combine them.\n"
         "5. Ask where results go: email (deliver_to) OR Google Drive folder (output_drive_url)\n\n"
         "## Kuri Type Routing\n"
         "Pick exactly one kuri_type based on PRIMARY output:\n"
@@ -597,14 +597,16 @@ async def save_workflow(
             Must be a DIFFERENT folder from input_source.
         email_subject: Subject line for result emails. Defaults to workflow name.
             Ignored if output_drive_url is set.
-        schedule: Cron expression. Format: "minute hour day month weekday".
+        schedule: Cron expression for Google Drive or schedule-only triggers.
+            Format: "minute hour day month weekday".
             Examples: "0 9 * * 1" (Monday 9am), "0 12 * * *" (daily noon).
-            Omit for manual-only.
+            IMPORTANT: Do NOT pass schedule when input_source is an email address.
+            Email triggers are event-driven — they fire when an email arrives, not on a schedule.
         timezone: Timezone for schedule. Default "UTC". Example: "Asia/Bangkok".
         input_source: Where new data comes from. Pass one of:
-            - Google Drive folder URL (e.g., "https://drive.google.com/drive/folders/...")
-            - Email address to monitor (e.g., "invoices@company.com")
-            Omit if script fetches its own data (financial_analysis_v2_kuri).
+            - Email address to monitor (e.g., "invoices@company.com") — NO schedule needed, fires on email arrival
+            - Google Drive folder URL (e.g., "https://drive.google.com/drive/folders/...") — requires schedule
+            Omit if script fetches its own data (financial_analysis_v2_kuri) — requires schedule.
         subject_filter: For email input — keyword in subject line to match.
         file_pattern: For Google Drive input — filename pattern to match
             (e.g., "sales_data*"). If omitted, downloads the newest file.
