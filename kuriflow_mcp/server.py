@@ -189,7 +189,7 @@ WORKFLOW_TEMPLATES = [
     {
         "id": "email_attachment_processor",
         "name": "Email Attachment Processor",
-        "description": "Monitors an email inbox. When someone sends a file, processes it automatically and emails results back. Perfect for invoice processing, data validation, or form handling.",
+        "description": "Monitors an email inbox. When someone sends a file, processes it automatically and emails results back. Perfect for expense reports, data validation, or form handling.",
         "trigger": "Email (automatic — runs when attachment arrives)",
         "input": "Email attachment (Excel, CSV, PDF)",
         "output": "Email with processed results",
@@ -329,7 +329,7 @@ async def describe_capabilities() -> str:
             "Monthly payroll calculation from email attachment → Google Sheets",
             "Daily inventory dashboard from API → HTML report to Drive",
             "DCF model with latest market data → Excel to finance team",
-            "Invoice processing from email → validated report to accounting",
+            "Expense report from email → validated summary to finance team",
             "Client proposal from template + data → personalized .docx to Drive",
         ],
         "limits": "Free early access: 10 runs/month per user",
@@ -493,7 +493,7 @@ async def run_workflow(
             Required so Kuriflow uses the same model for AI processing steps.
         file_paths: Optional list of local file paths to upload before execution.
         file_keys: Optional list of keys for each file (must match file_paths length).
-            Common keys: "attendance", "employees", "calendar", "invoice", "rates".
+            Common keys: "attendance", "employees", "calendar", "source_file", "rates".
         context_vars: Optional dictionary of context variables to pass to the workflow.
 
     Returns:
@@ -604,7 +604,7 @@ async def save_workflow(
             Email triggers are event-driven — they fire when an email arrives, not on a schedule.
         timezone: Timezone for schedule. Default "UTC". Example: "Asia/Bangkok".
         input_source: Where new data comes from. Pass one of:
-            - Email address to monitor (e.g., "invoices@company.com") — NO schedule needed, fires on email arrival
+            - Email address to monitor (e.g., "reports@company.com") — NO schedule needed, fires on email arrival
             - Google Drive folder URL (e.g., "https://drive.google.com/drive/folders/...") — requires schedule
             Omit if script fetches its own data (financial_analysis_v2_kuri) — requires schedule.
         subject_filter: For email input — keyword in subject line to match.
