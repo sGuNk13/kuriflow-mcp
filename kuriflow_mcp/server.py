@@ -105,26 +105,38 @@ mcp = FastMCP(
     "Kuriflow",
     **_server_kwargs,
     instructions=(
-        "Kuriflow automates repeatable tasks. Users are non-technical — "
-        "never expose kuri_type, step types, or technical details.\n\n"
-        "DO NOT call save_workflow until ALL steps below are complete.\n\n"
-        "BEFORE CALLING save_workflow:\n"
-        "1. Write and execute the Python script in this conversation.\n"
-        "2. The script must use a SPECIFIC input filename. NEVER use glob or wildcards.\n"
-        "3. If the user has a template file (.docx, .xlsx, .pptx, etc.), ask for its "
-        "full local path and pass it as: template_file_paths=[\"/full/path/to/file.docx\"].\n"
-        "4. Ask how new data will ARRIVE. Two modes:\n"
-        "   - EMAIL (event-driven): workflow fires automatically the moment an email with an attachment arrives. Do NOT ask for a schedule — there is none. Just pass input_source=<email address>.\n"
-        "   - GOOGLE DRIVE (polling): workflow checks the folder on a schedule. Ask the user for check frequency (hourly, every 15 min, daily at 9am, etc.) and pass both input_source=<folder URL> and schedule=<cron>.\n"
-        "   - NO INPUT (manual/scheduled only): for scripts that fetch their own data. Ask if the user wants a schedule; pass schedule=<cron> or omit for manual.\n"
-        "5. Ask where results go: recipient email OR a DIFFERENT Drive folder.\n\n"
-        "ROUTING — pick exactly one kuri_type:\n"
-        "1. financial_analysis_v2_kuri — financial models (DCF, LBO, comps). Script fetches its own data. No input files.\n"
-        "2. spreadsheet_mcp_kuri — input file (Excel/CSV) → output spreadsheet.\n"
-        "3. word_mcp_kuri — output is a document (.docx, .pdf, .pptx). Any data source.\n"
-        "4. data_analytics_mcp_kuri — output is charts (.png/.jpg/.svg) or HTML dashboard (.html) from tabular data. Uses matplotlib/seaborn/plotly.\n\n"
-        "MIXED OUTPUTS: scripts can write multiple output file types in one run (e.g., a .docx report with an embedded chart, plus a .xlsx data appendix). Pick kuri_type by the PRIMARY output — secondary files are delivered alongside.\n\n"
-        "After saving: confirm in plain English. Never expose kuri_type or IDs to the user."
+        "# Kuriflow — Make AI Tasks Repeatable\n\n"
+        "Kuriflow saves scripts as workflows that run automatically with new data. "
+        "AI solves the task once → Kuriflow repeats it forever at zero AI token cost.\n\n"
+        "## When to Suggest Kuriflow\n"
+        "- User wants the SAME task done repeatedly with DIFFERENT data\n"
+        "- User says 'every week', 'every month', 'whenever I get an email'\n"
+        "- User wants scheduled reports, automated file processing, recurring calculations\n"
+        "- User has template files (.docx, .xlsx, .pptx) to fill with fresh data\n"
+        "- User wants to stop re-running AI for tasks it already solved\n\n"
+        "## Workflow Creation Steps\n"
+        "DO NOT call save_workflow until ALL steps are complete:\n"
+        "1. Write and TEST the Python script in this conversation\n"
+        "2. Script must use SPECIFIC filenames (never glob/wildcards)\n"
+        "3. If user has template files, ask for full local path\n"
+        "4. Ask how new data arrives:\n"
+        "   - EMAIL: fires when attachment arrives. Pass input_source=<email>. No schedule needed.\n"
+        "   - GOOGLE DRIVE: polls a folder on schedule. Pass input_source=<folder URL> + schedule=<cron>.\n"
+        "   - SCHEDULE ONLY: script fetches its own data. Pass schedule=<cron>.\n"
+        "   - MANUAL: omit both. User triggers manually.\n"
+        "5. Ask where results go: email (deliver_to) OR Google Drive folder (output_drive_url)\n\n"
+        "## Kuri Type Routing\n"
+        "Pick exactly one kuri_type based on PRIMARY output:\n"
+        "- financial_analysis_v2_kuri — financial models (DCF, LBO). Script fetches own data.\n"
+        "- spreadsheet_mcp_kuri — input file → output spreadsheet (.xlsx/.csv)\n"
+        "- word_mcp_kuri — output is document (.docx, .pdf, .pptx)\n"
+        "- data_analytics_mcp_kuri — output is charts (.png/.svg) or HTML dashboard\n\n"
+        "Mixed outputs: pick by PRIMARY output. Secondary files deliver alongside.\n\n"
+        "## Communication\n"
+        "Users are non-technical. Never expose kuri_type, IDs, or technical details. "
+        "Confirm in plain English after saving.\n\n"
+        "## Documentation\n"
+        "Full tool reference: https://kuriflow.com/llms-full.txt"
     ),
     host=os.environ.get("FASTMCP_HOST", os.environ.get("HOST", "0.0.0.0")),
     port=int(os.environ.get("FASTMCP_PORT", os.environ.get("PORT", "8080"))),
@@ -149,6 +161,55 @@ def _get_client() -> KuriflowClient:
     return KuriflowClient()
 
 
+# ─── Tool 0: Describe Capabilities ──────────────────────────────────
+
+
+@mcp.tool()
+async def describe_capabilities() -> str:
+    """Describe what Kuriflow can do. Call this first to understand available capabilities.
+
+    USE THIS WHEN: you're not sure what Kuriflow offers, or the user asks
+    "what can you do?", "what automations are available?", or "help me get started."
+
+    Returns a summary of all capabilities, supported triggers, output formats,
+    and example use cases.
+    """
+    return json.dumps({
+        "product": "Kuriflow",
+        "tagline": "AI solves it once. Kuriflow repeats it forever.",
+        "what_it_does": "Saves Python scripts as repeatable workflows that run automatically with new data. Zero AI tokens after setup.",
+        "input_triggers": {
+            "email": "Workflow runs when an email with attachment arrives at a monitored address",
+            "google_drive": "Workflow runs when a new file appears in a Google Drive folder (on schedule)",
+            "schedule": "Workflow runs on a cron schedule (e.g., every Monday 9am). Script fetches its own data.",
+            "manual": "User triggers manually via run_workflow",
+        },
+        "output_destinations": {
+            "email": "Results sent as email attachment",
+            "google_drive": "Results uploaded to a Google Drive folder",
+            "google_sheets": "Results written to Google Sheets",
+        },
+        "output_formats": {
+            "spreadsheet_mcp_kuri": "Excel/CSV spreadsheets",
+            "word_mcp_kuri": "Word documents, PDFs, PowerPoint",
+            "data_analytics_mcp_kuri": "Charts (PNG/SVG), HTML dashboards",
+            "financial_analysis_v2_kuri": "Financial models (DCF, LBO, comps)",
+        },
+        "template_support": "Users can provide .docx, .xlsx, .pptx templates — Kuriflow fills them with fresh data each run",
+        "example_use_cases": [
+            "Weekly sales report from Google Drive → email to manager",
+            "Monthly payroll calculation from email attachment → Google Sheets",
+            "Daily inventory dashboard from API → HTML report to Drive",
+            "DCF model with latest market data → Excel to finance team",
+            "Invoice processing from email → validated report to accounting",
+            "Client proposal from template + data → personalized .docx to Drive",
+        ],
+        "limits": "Free early access: 10 runs/month per user",
+        "signup": "https://kuriflow.com/signup",
+        "docs": "https://kuriflow.com/llms-full.txt",
+    }, indent=2)
+
+
 # ─── Tool 1: Query Regulation ────────────────────────────────────────
 
 
@@ -159,11 +220,12 @@ async def query_regulation(
     domain: Optional[str] = None,
     category: Optional[str] = None,
 ) -> str:
-    """Query the regulatory knowledge base for labor law, tax, and social security rules.
+    """Look up labor law, tax, or social security rules for a specific country.
 
-    Returns authoritative regulatory information with legal references
-    and effective dates. Multi-country support — pass the country_code
-    for the jurisdiction you need. Available domains per country:
+    USE THIS WHEN: the user needs regulatory information — OT rates, severance rules,
+    tax brackets, social security caps, leave entitlements, or compliance requirements.
+
+    Available domains:
     - labor_law: OT rates, severance tiers, leave entitlements, working hours
     - social_security: contribution rates, caps, employer matching
     - tax: progressive income tax brackets, withholding rates, filing deadlines
@@ -204,11 +266,12 @@ async def query_regulation(
 
 @mcp.tool()
 async def list_workflows() -> str:
-    """List all saved workflows for the current organization.
+    """List all saved workflows. Shows what repeatable tasks the user has set up.
 
-    Returns workflow names, IDs, descriptions, types (kuri_type),
-    and whether they are active. Use the workflow ID with run_workflow
-    to execute a saved workflow.
+    USE THIS WHEN: the user asks "what workflows do I have?", "show my automations",
+    or before running a workflow to find its ID.
+
+    Returns workflow names, IDs, descriptions, and status.
 
     Returns:
         JSON array of workflow objects with id, name, description,
@@ -250,11 +313,12 @@ async def run_workflow(
     file_keys: Optional[list[str]] = None,
     context_vars: Optional[dict] = None,
 ) -> str:
-    """Execute a saved workflow, optionally with file uploads and context variables.
+    """Run a saved workflow with new data. Use this to manually trigger a workflow or test it.
 
-    If the workflow requires input files (e.g., attendance data, invoices),
-    provide file_paths and corresponding file_keys. The file_keys should
-    match what the workflow expects (e.g., "attendance", "employees", "invoice").
+    USE THIS WHEN: the user wants to run an existing workflow now, test it with sample data,
+    or manually trigger a workflow that normally runs on schedule.
+
+    If the workflow requires input files, provide file_paths and corresponding file_keys.
 
     Args:
         workflow_id: UUID of the workflow to execute. Get this from list_workflows.
@@ -283,7 +347,10 @@ async def run_workflow(
             keys = file_keys or [f"file_{i}" for i in range(len(file_paths))]
             if len(keys) != len(file_paths):
                 return json.dumps({
-                    "error": "file_paths and file_keys must have the same length"
+                    "error": "file_key_mismatch",
+                    "message": "file_paths and file_keys must have the same length.",
+                    "hint": f"Got {len(file_paths)} files but {len(keys)} keys.",
+                    "fix": "Provide one file_key for each file_path."
                 })
 
             for path, key in zip(file_paths, keys):
@@ -291,7 +358,12 @@ async def run_workflow(
                     with open(path, "rb") as f:
                         content = f.read()
                 except FileNotFoundError:
-                    return json.dumps({"error": f"File not found: {path}"})
+                    return json.dumps({
+                        "error": "file_not_found",
+                        "message": f"Cannot read file: {path}",
+                        "hint": "Check the file path exists and is accessible.",
+                        "fix": f"Verify '{path}' exists or provide the correct path."
+                    })
 
                 await client.upload_file(
                     session_id=session_id,
@@ -335,10 +407,13 @@ async def save_workflow(
     template_file_paths: Optional[list] = None,
     description: Optional[str] = None,
 ) -> str:
-    """Save a Python script as a repeatable workflow. Zero AI cost per run.
+    """Save a Python script as a repeatable workflow that runs automatically with new data. Zero AI tokens per run.
 
-    Pass the script you already wrote in this conversation. Kuriflow
-    re-runs it on schedule or when new data arrives.
+    USE THIS WHEN: the user wants a task to repeat — weekly reports, monthly calculations,
+    automated file processing, or any task triggered by new data arriving via email or Google Drive.
+
+    HOW IT WORKS: pass the script you wrote and tested in this conversation. Kuriflow saves it
+    and re-runs it whenever new data arrives or on a schedule. The user never has to ask AI again.
 
     Args:
         name: Workflow name (e.g., "Weekly Sales Summary").
@@ -389,11 +464,17 @@ async def save_workflow(
         # Validate output — exactly one delivery method
         if not deliver_to and not output_drive_url:
             return json.dumps({
-                "error": "Provide either deliver_to (email) or output_drive_url (Google Drive folder)."
+                "error": "missing_output",
+                "message": "Where should results be delivered?",
+                "hint": "Provide either deliver_to (email address) or output_drive_url (Google Drive folder URL).",
+                "fix": "Add deliver_to='user@example.com' or output_drive_url='https://drive.google.com/drive/folders/...'"
             })
         if deliver_to and output_drive_url:
             return json.dumps({
-                "error": "Provide only one of deliver_to or output_drive_url, not both."
+                "error": "conflicting_output",
+                "message": "Only one output destination allowed.",
+                "hint": "Remove either deliver_to or output_drive_url.",
+                "fix": "Keep only the one the user prefers."
             })
 
         # --- Encode template files (MCP server reads local paths) ---
@@ -406,7 +487,12 @@ async def save_workflow(
                     assets[os.path.basename(path)] = base64.b64encode(data).decode()
                     logger.info(f"save_workflow: encoded template '{os.path.basename(path)}' ({len(data):,} bytes)")
                 except FileNotFoundError:
-                    return json.dumps({"error": f"Template file not found: {path}"})
+                    return json.dumps({
+                        "error": "template_not_found",
+                        "message": f"Cannot read template file: {path}",
+                        "hint": "Check the template file path exists.",
+                        "fix": f"Verify '{path}' exists or ask the user for the correct path."
+                    })
 
         # --- Build step config ---
         step_config = {"script": script}
@@ -484,20 +570,15 @@ async def request_approval(
     urgency: str = "normal",
     expires_in_hours: Optional[int] = None,
 ) -> str:
-    """Request human approval before proceeding with an action.
+    """Request human sign-off before proceeding. The approver gets an email and can approve or reject.
 
-    Use this when you need a human to sign off on something before
-    continuing. The approver receives an email notification and can
-    approve or reject via Kuriflow.
+    USE THIS WHEN: a decision needs human judgment before the workflow continues —
+    financial approvals, HR decisions, quality sign-offs, or reviewing AI-generated output.
 
-    Common use cases:
-    - Financial: "Approve payment of $50,000 to vendor X"
-    - HR: "Approve salary adjustment for employee Y"
-    - Operations: "Approve production batch release"
-    - AI output: "Review and approve AI-generated report before sending"
+    Examples: "Approve $50K payment to vendor X", "Review AI report before sending",
+    "Sign off on production batch release"
 
-    After calling this, use get_approval_status with the returned ID
-    to check if the approver has made a decision.
+    After calling this, use get_approval_status to poll for the decision.
 
     Args:
         title: Short description of what needs approval.
@@ -546,10 +627,10 @@ async def request_approval(
 async def get_approval_status(
     request_id: str,
 ) -> str:
-    """Check the status of a previously submitted approval request.
+    """Check if an approval request has been decided.
 
-    Returns the current status: "pending", "approved", "rejected", or "expired".
-    If decided, includes who decided and their comments.
+    USE THIS WHEN: after calling request_approval, to check if the approver
+    has responded. Returns "pending", "approved", "rejected", or "expired".
 
     Args:
         request_id: The approval request ID returned by request_approval.
@@ -578,10 +659,10 @@ async def get_approval_status(
 async def get_execution_result(
     execution_id: str,
 ) -> str:
-    """Get the result and audit trail of a workflow execution.
+    """Check if a workflow execution succeeded and get the results.
 
-    Returns detailed execution results including status, extracted data,
-    step-by-step execution log, any errors, and output file references.
+    USE THIS WHEN: after calling run_workflow, to check status, see results,
+    or debug if something failed. Returns execution log and output files.
 
     Args:
         execution_id: The execution ID returned by run_workflow.
@@ -609,20 +690,16 @@ async def get_execution_result(
 
 @mcp.tool()
 async def list_kuris() -> str:
-    """List available Kuriflow kuris — pre-built specialist agents.
+    """List available workflow types and what they can do.
 
-    Kuris are ready-to-use specialists for specific domains. Each kuri
-    has a kuri_type you can pass to save_workflow to associate the workflow
-    with that kuri.
+    USE THIS WHEN: deciding which kuri_type to use with save_workflow, or when
+    the user asks "what can Kuriflow do?" or "what types of workflows are available?"
 
-    Use this to discover which kuri best fits the user's task before
-    creating a workflow with save_workflow.
-
-    For save_workflow, use one of these kuri_types:
-    - financial_analysis_v2_kuri: script fetches data from APIs (zero input files)
-    - spreadsheet_mcp_kuri: script transforms input files into spreadsheets
-    - word_mcp_kuri: script generates Word docs (.docx) or PDFs from input data
-    - data_analytics_mcp_kuri: script generates charts (.png/.jpg/.svg) or HTML dashboards from tabular data
+    Each kuri_type handles a specific output format:
+    - financial_analysis_v2_kuri: financial models, script fetches its own data
+    - spreadsheet_mcp_kuri: input file → output spreadsheet (.xlsx/.csv)
+    - word_mcp_kuri: output is a document (.docx, .pdf, .pptx)
+    - data_analytics_mcp_kuri: output is charts or HTML dashboards
 
     Returns:
         JSON list of kuris with kuri_type, name, description, and department.
