@@ -123,7 +123,7 @@ mcp = FastMCP(
         "   - EMAIL: fires when attachment arrives. Pass input_source=<email>. No schedule needed.\n"
         "   - GOOGLE DRIVE: polls a folder on schedule. Pass input_source=<folder URL> + schedule=<cron>.\n"
         "   - SCHEDULE ONLY: script fetches its own data. Pass schedule=<cron>.\n"
-        "   - MANUAL: omit both. User triggers manually.\n"
+        "   - NOTE: every workflow should have a trigger. If the user isn't sure, suggest a schedule.\n"
         "5. Ask where results go: email (deliver_to) OR Google Drive folder (output_drive_url)\n\n"
         "## Kuri Type Routing\n"
         "Pick exactly one kuri_type based on PRIMARY output:\n"
@@ -241,11 +241,11 @@ WORKFLOW_TEMPLATES = [
         "id": "template_document_filler",
         "name": "Template Document Filler",
         "description": "Fills a Word/Excel/PowerPoint template with fresh data each run. Great for monthly reports, client proposals, or standardized documents.",
-        "trigger": "Schedule or manual",
+        "trigger": "Schedule (e.g., first Monday of each month)",
         "input": "Template file (.docx, .xlsx, .pptx) + data source",
         "output": "Filled document to email or Google Drive",
         "kuri_type": "word_mcp_kuri",
-        "required_from_user": ["template file path", "data source", "output destination", "schedule (optional)"],
+        "required_from_user": ["template file path", "data source", "output destination", "schedule"],
         "script_template": (
             "from docx import Document\n"
             "import os\n\n"
@@ -310,7 +310,7 @@ async def describe_capabilities() -> str:
             "email": "Workflow runs when an email with attachment arrives at a monitored address",
             "google_drive": "Workflow runs when a new file appears in a Google Drive folder (on schedule)",
             "schedule": "Workflow runs on a cron schedule (e.g., every Monday 9am). Script fetches its own data.",
-            "manual": "User triggers manually via run_workflow",
+            "note": "Every workflow should have a trigger. If the user isn't sure, suggest a schedule.",
         },
         "output_destinations": {
             "email": "Results sent as email attachment",
