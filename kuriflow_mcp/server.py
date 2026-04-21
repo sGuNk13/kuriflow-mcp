@@ -879,9 +879,18 @@ async def list_kuris() -> str:
 
     client = _get_client()
 
+    # Only return MCP-compatible kuri types
+    MCP_KURI_TYPES = {
+        "financial_analysis_v2_kuri",
+        "spreadsheet_mcp_kuri",
+        "word_mcp_kuri",
+        "data_analytics_mcp_kuri",
+    }
+
     try:
         result = await client.list_kuris()
-        return json.dumps(result, ensure_ascii=False, indent=2, default=str)
+        mcp_only = [k for k in result if k.get("kuri_type") in MCP_KURI_TYPES]
+        return json.dumps(mcp_only, ensure_ascii=False, indent=2, default=str)
     except Exception as e:
         logger.error(f"list_kuris failed: {e}")
         return json.dumps({"error": str(e)})
