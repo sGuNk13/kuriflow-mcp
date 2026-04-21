@@ -165,21 +165,19 @@ def _get_client() -> KuriflowClient:
 
 WORKFLOW_TEMPLATES = [
     {
-        "id": "excel_report_drive_to_email",
-        "name": "Excel Report: Drive → Email",
-        "description": "Reads an Excel/CSV file from Google Drive, processes it, and emails a summary report. Great for weekly/monthly reports.",
-        "trigger": "Google Drive (scheduled)",
-        "input": "Excel or CSV file from Google Drive folder",
-        "output": "Email with processed Excel attachment",
+        "id": "spreadsheet_report",
+        "name": "Spreadsheet Report",
+        "description": "Reads data, processes it (filter, aggregate, calculate), and outputs an Excel or CSV report. Use for sales summaries, expense reports, data reconciliation, or any tabular analysis.",
+        "output_format": "Excel (.xlsx) or CSV",
         "kuri_type": "spreadsheet_mcp_kuri",
-        "required_from_user": ["Google Drive folder URL", "recipient email", "schedule (e.g., every Monday 9am)", "what processing to do"],
+        "trigger_options": "Email (auto on attachment), Google Drive (scheduled), or Schedule (script fetches data)",
+        "required_from_user": ["what data to process", "what calculations/transformations to apply", "where results go (email or Drive)", "how new data arrives (email, Drive, or schedule)"],
         "script_template": (
-            "import pandas as pd\n"
-            "import os\n\n"
+            "import pandas as pd\n\n"
             "# Read the input file\n"
             "df = pd.read_excel('INPUT_FILENAME')\n\n"
             "# TODO: Add your processing logic here\n"
-            "# Example: summary = df.groupby('category').sum()\n\n"
+            "# Example: summary = df.groupby('category').agg({'amount': 'sum'})\n\n"
             "# Write output\n"
             "output_file = 'report.xlsx'\n"
             "df.to_excel(output_file, index=False)\n"
@@ -187,42 +185,19 @@ WORKFLOW_TEMPLATES = [
         ),
     },
     {
-        "id": "email_attachment_processor",
-        "name": "Email Attachment Processor",
-        "description": "Monitors an email inbox. When someone sends a file, processes it automatically and emails results back. Perfect for expense reports, data validation, or form handling.",
-        "trigger": "Email (automatic — runs when attachment arrives)",
-        "input": "Email attachment (Excel, CSV, PDF)",
-        "output": "Email with processed results",
-        "kuri_type": "spreadsheet_mcp_kuri",
-        "required_from_user": ["email address to monitor", "recipient email for results", "what processing to do"],
-        "script_template": (
-            "import pandas as pd\n"
-            "import os\n\n"
-            "# Read the incoming file\n"
-            "df = pd.read_excel('INPUT_FILENAME')\n\n"
-            "# TODO: Add your processing logic here\n"
-            "# Example: validate data, categorize, calculate totals\n\n"
-            "# Write output\n"
-            "output_file = 'processed_results.xlsx'\n"
-            "df.to_excel(output_file, index=False)\n"
-            "print(f'Output: {output_file}')\n"
-        ),
-    },
-    {
-        "id": "daily_dashboard",
-        "name": "Daily Dashboard with Charts",
-        "description": "Fetches data on schedule, generates charts and an HTML dashboard, and saves to Google Drive. Great for daily/weekly KPI dashboards.",
-        "trigger": "Schedule (e.g., daily at 8am)",
-        "input": "Script fetches its own data (API, database, or file)",
-        "output": "HTML dashboard + chart images to Google Drive",
+        "id": "dashboard_with_charts",
+        "name": "Dashboard with Charts",
+        "description": "Generates charts, visualizations, and an HTML dashboard from data. Use for KPI dashboards, trend analysis, cohort reports, or any visual data summary.",
+        "output_format": "Charts (.png/.svg) + HTML dashboard",
         "kuri_type": "data_analytics_mcp_kuri",
-        "required_from_user": ["data source (API URL, file, or logic)", "output Google Drive folder", "schedule", "what metrics/charts to show"],
+        "trigger_options": "Email (auto on attachment), Google Drive (scheduled), or Schedule (script fetches data)",
+        "required_from_user": ["what data to visualize", "what charts/metrics to show", "where results go (email or Drive)", "how new data arrives"],
         "script_template": (
             "import pandas as pd\n"
             "import matplotlib.pyplot as plt\n"
             "from datetime import datetime\n\n"
-            "# TODO: Fetch or read your data\n"
-            "# df = pd.read_csv('https://api.example.com/data.csv')\n\n"
+            "# TODO: Read or fetch your data\n"
+            "# df = pd.read_excel('INPUT_FILENAME')\n\n"
             "# Create charts\n"
             "fig, ax = plt.subplots(figsize=(10, 6))\n"
             "# TODO: Plot your data\n"
@@ -231,24 +206,22 @@ WORKFLOW_TEMPLATES = [
             "plt.savefig('dashboard.png', dpi=150, bbox_inches='tight')\n"
             "plt.close()\n\n"
             "# Generate HTML report\n"
-            "html = f'<html><body><h1>Daily Dashboard</h1><img src=\"dashboard.png\"></body></html>'\n"
+            "html = f'<html><body><h1>Dashboard</h1><img src=\"dashboard.png\"></body></html>'\n"
             "with open('dashboard.html', 'w') as f:\n"
             "    f.write(html)\n"
             "print('Output: dashboard.html, dashboard.png')\n"
         ),
     },
     {
-        "id": "template_document_filler",
-        "name": "Template Document Filler",
-        "description": "Fills a Word/Excel/PowerPoint template with fresh data each run. Great for monthly reports, client proposals, or standardized documents.",
-        "trigger": "Schedule (e.g., first Monday of each month)",
-        "input": "Template file (.docx, .xlsx, .pptx) + data source",
-        "output": "Filled document to email or Google Drive",
+        "id": "document_from_template",
+        "name": "Document from Template",
+        "description": "Fills a Word, Excel, or PowerPoint template with fresh data each run. Use for monthly reports, client proposals, contracts, or any standardized document.",
+        "output_format": "Word (.docx), Excel (.xlsx), or PowerPoint (.pptx)",
         "kuri_type": "word_mcp_kuri",
-        "required_from_user": ["template file path", "data source", "output destination", "schedule"],
+        "trigger_options": "Email (auto on attachment), Google Drive (scheduled), or Schedule (script fetches data)",
+        "required_from_user": ["template file path", "what data to fill in", "where results go (email or Drive)", "how new data arrives"],
         "script_template": (
-            "from docx import Document\n"
-            "import os\n\n"
+            "from docx import Document\n\n"
             "# Read template\n"
             "doc = Document('TEMPLATE_FILENAME')\n\n"
             "# TODO: Replace placeholders with actual data\n"
@@ -263,13 +236,12 @@ WORKFLOW_TEMPLATES = [
     },
     {
         "id": "financial_model",
-        "name": "Financial Model (DCF / Analysis)",
-        "description": "Fetches financial data from online sources and builds a financial model. Runs on schedule to keep analysis current. Great for DCF, LBO, or market comparisons.",
-        "trigger": "Schedule (e.g., weekly, monthly)",
-        "input": "Script fetches data from financial APIs",
-        "output": "Excel model to email",
+        "name": "Financial Model",
+        "description": "Fetches financial data from online sources and builds a model. Use for DCF valuations, LBO analysis, market comparisons, or portfolio tracking.",
+        "output_format": "Excel (.xlsx) with multiple sheets",
         "kuri_type": "financial_analysis_v2_kuri",
-        "required_from_user": ["what company/data to analyze", "recipient email", "schedule", "type of analysis"],
+        "trigger_options": "Schedule (script fetches its own data from financial APIs)",
+        "required_from_user": ["what company/data to analyze", "type of analysis (DCF, comps, etc.)", "where results go (email or Drive)", "schedule (e.g., weekly)"],
         "script_template": (
             "import pandas as pd\n"
             "import yfinance as yf\n\n"
@@ -364,16 +336,15 @@ async def list_templates() -> str:
                 "id": t["id"],
                 "name": t["name"],
                 "description": t["description"],
-                "trigger": t["trigger"],
-                "input": t["input"],
-                "output": t["output"],
+                "output_format": t["output_format"],
                 "kuri_type": t["kuri_type"],
+                "trigger_options": t["trigger_options"],
                 "required_from_user": t["required_from_user"],
                 "script_template": t["script_template"],
             }
             for t in WORKFLOW_TEMPLATES
         ],
-        "usage": "Pick a template, customize the script_template, then call save_workflow with the kuri_type and user's details.",
+        "usage": "Pick a template by output format. Customize the script_template. Ask the user how data arrives (email, Drive, or schedule) and where results go. Then call save_workflow.",
     }, indent=2)
 
 
