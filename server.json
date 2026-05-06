@@ -1,7 +1,7 @@
 {
   "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
   "name": "io.github.sGuNk13/kuriflow-mcp",
-  "description": "Make AI tasks repeatable. Save scripts as workflows that run automatically with new data via email, Google Drive, or schedule. Zero AI tokens per run.",
+  "description": "Make AI tasks repeatable. Run with new data automatically — zero AI tokens per run.",
   "repository": {
     "url": "https://github.com/sGuNk13/kuriflow-mcp",
     "source": "github"
