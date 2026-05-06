@@ -1,0 +1,36 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+  "name": "io.github.sGuNk13/kuriflow-mcp",
+  "description": "Make AI tasks repeatable. Save scripts as workflows that run automatically with new data via email, Google Drive, or schedule. Zero AI tokens per run.",
+  "repository": {
+    "url": "https://github.com/sGuNk13/kuriflow-mcp",
+    "source": "github"
+  },
+  "version": "0.1.0",
+  "packages": [
+    {
+      "registryType": "pypi",
+      "identifier": "kuriflow-mcp",
+      "version": "0.1.0",
+      "transport": {
+        "type": "stdio"
+      },
+      "environmentVariables": [
+        {
+          "name": "KURIFLOW_API_KEY",
+          "description": "Your Kuriflow API key. Get one at https://kuriflow.com/signup (Google sign-in, 30 seconds).",
+          "isRequired": true,
+          "format": "string",
+          "isSecret": true
+        },
+        {
+          "name": "KURIFLOW_API_URL",
+          "description": "Kuriflow backend URL. Defaults to https://api.kuriflow.com — override only for self-hosted deployments.",
+          "isRequired": false,
+          "format": "string",
+          "default": "https://api.kuriflow.com"
+        }
+      ]
+    }
+  ]
+}
