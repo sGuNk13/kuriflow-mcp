@@ -34,7 +34,7 @@ logger = logging.getLogger(__name__)
 SIGNUP_MESSAGE = (
     "To use Kuriflow, sign up at https://kuriflow.com/signup with your "
     "Google account (takes 30 seconds). Your API key will be shown after "
-    "signup — add it to your Claude MCP settings as KURIFLOW_API_KEY."
+    "signup — add it to your AI agent's MCP settings as KURIFLOW_API_KEY."
 )
 
 API_URL = os.environ.get("KURIFLOW_API_URL", "https://api.kuriflow.com").rstrip("/")
@@ -60,7 +60,7 @@ class KuriflowTokenVerifier:
     """Validates kf_ API keys against the Kuriflow backend.
 
     Used when running as a remote MCP server (streamable-http).
-    Claude sends the user's API key as a Bearer token.
+    The AI agent sends the user's API key as a Bearer token.
     """
 
     async def verify_token(self, token: str):
@@ -127,9 +127,9 @@ mcp = FastMCP(
         "5. Ask where results go: email (deliver_to) OR Google Drive folder (output_drive_url)\n\n"
         "## Kuri Type Routing\n"
         "Pick exactly one kuri_type based on PRIMARY output:\n"
-        "- financial_analysis_v2_kuri — financial models (DCF, LBO). Script fetches own data.\n"
-        "- spreadsheet_mcp_kuri — input file → output spreadsheet (.xlsx/.csv)\n"
-        "- word_mcp_kuri — output is document (.docx, .pdf, .pptx)\n"
+        "- word_mcp_kuri — output is a document (.docx, .pdf)\n"
+        "- spreadsheet_mcp_kuri — output is a spreadsheet (.xlsx, .csv)\n"
+        "- presentation_mcp_kuri — output is a presentation (.pptx)\n"
         "- data_analytics_mcp_kuri — output is charts (.png/.svg) or HTML dashboard\n\n"
         "Mixed outputs: pick by PRIMARY output. Secondary files deliver alongside.\n\n"
         "## Communication\n"
@@ -165,97 +165,88 @@ def _get_client() -> KuriflowClient:
 
 WORKFLOW_TEMPLATES = [
     {
-        "id": "spreadsheet_report",
-        "name": "Spreadsheet Report",
-        "description": "Reads data, processes it (filter, aggregate, calculate), and outputs an Excel or CSV report. Use for sales summaries, expense reports, data reconciliation, or any tabular analysis.",
-        "output_format": "Excel (.xlsx) or CSV",
-        "kuri_type": "spreadsheet_mcp_kuri",
-        "trigger_options": "Email (auto on attachment), Google Drive (scheduled), or Schedule (script fetches data)",
-        "required_from_user": ["what data to process", "what calculations/transformations to apply", "where results go (email or Drive)", "how new data arrives (email, Drive, or schedule)"],
-        "script_template": (
-            "import pandas as pd\n\n"
-            "# Read the input file\n"
-            "df = pd.read_excel('INPUT_FILENAME')\n\n"
-            "# TODO: Add your processing logic here\n"
-            "# Example: summary = df.groupby('category').agg({'amount': 'sum'})\n\n"
-            "# Write output\n"
-            "output_file = 'report.xlsx'\n"
-            "df.to_excel(output_file, index=False)\n"
-            "print(f'Output: {output_file}')\n"
-        ),
-    },
-    {
-        "id": "dashboard_with_charts",
-        "name": "Dashboard with Charts",
-        "description": "Generates charts, visualizations, and an HTML dashboard from data. Use for KPI dashboards, trend analysis, cohort reports, or any visual data summary.",
-        "output_format": "Charts (.png/.svg) + HTML dashboard",
-        "kuri_type": "data_analytics_mcp_kuri",
-        "trigger_options": "Email (auto on attachment), Google Drive (scheduled), or Schedule (script fetches data)",
-        "required_from_user": ["what data to visualize", "what charts/metrics to show", "where results go (email or Drive)", "how new data arrives"],
-        "script_template": (
-            "import pandas as pd\n"
-            "import matplotlib.pyplot as plt\n"
-            "from datetime import datetime\n\n"
-            "# TODO: Read or fetch your data\n"
-            "# df = pd.read_excel('INPUT_FILENAME')\n\n"
-            "# Create charts\n"
-            "fig, ax = plt.subplots(figsize=(10, 6))\n"
-            "# TODO: Plot your data\n"
-            "# ax.bar(df['category'], df['value'])\n"
-            "ax.set_title(f'Dashboard — {datetime.now().strftime(\"%Y-%m-%d\")}')\n"
-            "plt.savefig('dashboard.png', dpi=150, bbox_inches='tight')\n"
-            "plt.close()\n\n"
-            "# Generate HTML report\n"
-            "html = f'<html><body><h1>Dashboard</h1><img src=\"dashboard.png\"></body></html>'\n"
-            "with open('dashboard.html', 'w') as f:\n"
-            "    f.write(html)\n"
-            "print('Output: dashboard.html, dashboard.png')\n"
-        ),
-    },
-    {
-        "id": "document_from_template",
-        "name": "Document from Template",
-        "description": "Fills a Word, Excel, or PowerPoint template with fresh data each run. Use for monthly reports, client proposals, contracts, or any standardized document.",
-        "output_format": "Word (.docx), Excel (.xlsx), or PowerPoint (.pptx)",
+        "id": "document",
+        "name": "Document",
+        "description": "Output is a document — Word (.docx) or PDF. Any use case that needs a document output.",
+        "output_format": ".docx, .pdf",
         "kuri_type": "word_mcp_kuri",
         "trigger_options": "Email (auto on attachment), Google Drive (scheduled), or Schedule (script fetches data)",
-        "required_from_user": ["template file path", "what data to fill in", "where results go (email or Drive)", "how new data arrives"],
+        "required_from_user": ["what to produce", "where results go (email or Drive)", "how new data arrives (email, Drive, or schedule)"],
         "script_template": (
             "from docx import Document\n\n"
-            "# Read template\n"
-            "doc = Document('TEMPLATE_FILENAME')\n\n"
-            "# TODO: Replace placeholders with actual data\n"
-            "# for paragraph in doc.paragraphs:\n"
-            "#     if '{{company_name}}' in paragraph.text:\n"
-            "#         paragraph.text = paragraph.text.replace('{{company_name}}', 'Acme Corp')\n\n"
+            "# TODO: Create or fill a document\n"
+            "doc = Document()\n"
+            "doc.add_heading('Report Title', 0)\n"
+            "doc.add_paragraph('Your content here.')\n\n"
             "# Save output\n"
-            "output_file = 'filled_report.docx'\n"
+            "output_file = 'report.docx'\n"
             "doc.save(output_file)\n"
             "print(f'Output: {output_file}')\n"
         ),
     },
     {
-        "id": "financial_model",
-        "name": "Financial Model",
-        "description": "Fetches financial data from online sources and builds a model. Use for DCF valuations, LBO analysis, market comparisons, or portfolio tracking.",
-        "output_format": "Excel (.xlsx) with multiple sheets",
-        "kuri_type": "financial_analysis_v2_kuri",
-        "trigger_options": "Schedule (script fetches its own data from financial APIs)",
-        "required_from_user": ["what company/data to analyze", "type of analysis (DCF, comps, etc.)", "where results go (email or Drive)", "schedule (e.g., weekly)"],
+        "id": "spreadsheet",
+        "name": "Spreadsheet",
+        "description": "Output is a spreadsheet — Excel (.xlsx) or CSV. Any use case that needs tabular data output.",
+        "output_format": ".xlsx, .csv",
+        "kuri_type": "spreadsheet_mcp_kuri",
+        "trigger_options": "Email (auto on attachment), Google Drive (scheduled), or Schedule (script fetches data)",
+        "required_from_user": ["what data to process", "where results go (email or Drive)", "how new data arrives (email, Drive, or schedule)"],
+        "script_template": (
+            "import pandas as pd\n\n"
+            "# TODO: Read or fetch your data\n"
+            "# df = pd.read_excel('INPUT_FILENAME')\n\n"
+            "# TODO: Process the data\n\n"
+            "# Save output\n"
+            "output_file = 'output.xlsx'\n"
+            "df.to_excel(output_file, index=False)\n"
+            "print(f'Output: {output_file}')\n"
+        ),
+    },
+    {
+        "id": "presentation",
+        "name": "Presentation",
+        "description": "Output is a PowerPoint presentation (.pptx). Any use case that needs slides output.",
+        "output_format": ".pptx",
+        "kuri_type": "presentation_mcp_kuri",
+        "trigger_options": "Email (auto on attachment), Google Drive (scheduled), or Schedule (script fetches data)",
+        "required_from_user": ["what slides to create", "where results go (email or Drive)", "how new data arrives (email, Drive, or schedule)"],
+        "script_template": (
+            "from pptx import Presentation\n\n"
+            "# TODO: Create or fill a presentation\n"
+            "prs = Presentation()\n"
+            "slide = prs.slides.add_slide(prs.slide_layouts[0])\n"
+            "slide.shapes.title.text = 'Report Title'\n"
+            "slide.placeholders[1].text = 'Your content here.'\n\n"
+            "# Save output\n"
+            "output_file = 'presentation.pptx'\n"
+            "prs.save(output_file)\n"
+            "print(f'Output: {output_file}')\n"
+        ),
+    },
+    {
+        "id": "html_dashboard",
+        "name": "HTML / Dashboard",
+        "description": "Output is an HTML page, charts, or visual dashboard. Any use case that needs visual output.",
+        "output_format": ".html, .png, .svg",
+        "kuri_type": "data_analytics_mcp_kuri",
+        "trigger_options": "Email (auto on attachment), Google Drive (scheduled), or Schedule (script fetches data)",
+        "required_from_user": ["what to visualize", "where results go (email or Drive)", "how new data arrives (email, Drive, or schedule)"],
         "script_template": (
             "import pandas as pd\n"
-            "import yfinance as yf\n\n"
-            "# Fetch financial data\n"
-            "ticker = yf.Ticker('TICKER_SYMBOL')\n"
-            "financials = ticker.financials\n"
-            "balance_sheet = ticker.balance_sheet\n\n"
-            "# TODO: Build your financial model\n"
-            "# DCF, comps, LBO, etc.\n\n"
-            "# Write output\n"
-            "with pd.ExcelWriter('financial_model.xlsx') as writer:\n"
-            "    financials.to_excel(writer, sheet_name='Income Statement')\n"
-            "    balance_sheet.to_excel(writer, sheet_name='Balance Sheet')\n"
-            "print('Output: financial_model.xlsx')\n"
+            "import matplotlib.pyplot as plt\n\n"
+            "# TODO: Read or fetch your data\n"
+            "# df = pd.read_excel('INPUT_FILENAME')\n\n"
+            "# Create charts\n"
+            "fig, ax = plt.subplots(figsize=(10, 6))\n"
+            "# TODO: Plot your data\n"
+            "plt.savefig('chart.png', dpi=150, bbox_inches='tight')\n"
+            "plt.close()\n\n"
+            "# Generate HTML\n"
+            "html = '<html><body><h1>Dashboard</h1><img src=\"chart.png\"></body></html>'\n"
+            "with open('dashboard.html', 'w') as f:\n"
+            "    f.write(html)\n"
+            "print('Output: dashboard.html, chart.png')\n"
         ),
     },
 ]
@@ -290,10 +281,10 @@ async def describe_capabilities() -> str:
             "google_sheets": "Results written to Google Sheets",
         },
         "output_formats": {
-            "spreadsheet_mcp_kuri": "Excel/CSV spreadsheets",
-            "word_mcp_kuri": "Word documents, PDFs, PowerPoint",
-            "data_analytics_mcp_kuri": "Charts (PNG/SVG), HTML dashboards",
-            "financial_analysis_v2_kuri": "Financial models (DCF, LBO, comps)",
+            "word_mcp_kuri": "Documents (.docx, .pdf)",
+            "spreadsheet_mcp_kuri": "Spreadsheets (.xlsx, .csv)",
+            "presentation_mcp_kuri": "Presentations (.pptx)",
+            "data_analytics_mcp_kuri": "Charts (.png, .svg) and HTML dashboards",
         },
         "template_support": "Users can provide .docx, .xlsx, .pptx templates — Kuriflow fills them with fresh data each run",
         "example_use_cases": [
@@ -460,7 +451,7 @@ async def run_workflow(
 
     Args:
         workflow_id: UUID of the workflow to execute. Get this from list_workflows.
-        model: Your AI model ID (e.g., "claude-opus-4-6", "claude-sonnet-4-6").
+        model: Your AI model ID (e.g., "claude-opus-4-6", "gemini-2.5-pro", "gpt-4o").
             Required so Kuriflow uses the same model for AI processing steps.
         file_paths: Optional list of local file paths to upload before execution.
         file_keys: Optional list of keys for each file (must match file_paths length).
@@ -557,10 +548,10 @@ async def save_workflow(
         name: Workflow name (e.g., "Weekly Sales Summary").
         script: Full Python script source code. Must use specific filenames
             (e.g., pd.read_excel('data.xlsx')), NOT glob or wildcards.
-        kuri_type: REQUIRED. One of: "financial_analysis_v2_kuri",
-            "spreadsheet_mcp_kuri", "word_mcp_kuri", "data_analytics_mcp_kuri".
-            See routing in system instructions.
-        model: Your AI model ID (e.g., "claude-opus-4-6").
+        kuri_type: REQUIRED. Pick by output format:
+            "word_mcp_kuri" (document), "spreadsheet_mcp_kuri" (spreadsheet),
+            "presentation_mcp_kuri" (PowerPoint), "data_analytics_mcp_kuri" (HTML/charts).
+        model: Your AI model ID (e.g., "claude-opus-4-6", "gemini-2.5-pro", "gpt-4o").
         deliver_to: Email address to send results to.
             Provide either deliver_to OR output_drive_url (not both).
         output_drive_url: Google Drive folder URL to upload results to.
@@ -577,7 +568,7 @@ async def save_workflow(
         input_source: Where new data comes from. Pass one of:
             - Email address to monitor (e.g., "reports@company.com") — NO schedule needed, fires on email arrival
             - Google Drive folder URL (e.g., "https://drive.google.com/drive/folders/...") — requires schedule
-            Omit if script fetches its own data (financial_analysis_v2_kuri) — requires schedule.
+            Omit if script fetches its own data — use schedule trigger instead.
         subject_filter: For email input — keyword in subject line to match.
         file_pattern: For Google Drive input — filename pattern to match
             (e.g., "sales_data*"). If omitted, downloads the newest file.
@@ -749,7 +740,7 @@ async def request_approval(
             approver_email=approver_email,
             description=description,
             category=category,
-            requested_by="Claude",
+            requested_by="AI Agent",
             context_data=context_data or {},
             urgency=urgency,
             expires_in_hours=expires_in_hours,
@@ -836,9 +827,10 @@ async def list_kuris() -> str:
     the user asks "what can Kuriflow do?" or "what types of workflows are available?"
 
     Each kuri_type handles a specific output format:
-    - financial_analysis_v2_kuri: financial models, script fetches its own data
+    - presentation_mcp_kuri: output is a presentation (.pptx)
     - spreadsheet_mcp_kuri: input file → output spreadsheet (.xlsx/.csv)
-    - word_mcp_kuri: output is a document (.docx, .pdf, .pptx)
+    - word_mcp_kuri: output is a document (.docx, .pdf)
+    - presentation_mcp_kuri: output is a presentation (.pptx)
     - data_analytics_mcp_kuri: output is charts or HTML dashboards
 
     Returns:
@@ -852,9 +844,9 @@ async def list_kuris() -> str:
 
     # Only return MCP-compatible kuri types
     MCP_KURI_TYPES = {
-        "financial_analysis_v2_kuri",
         "spreadsheet_mcp_kuri",
         "word_mcp_kuri",
+        "presentation_mcp_kuri",
         "data_analytics_mcp_kuri",
     }
 

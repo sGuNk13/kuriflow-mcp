@@ -1,8 +1,10 @@
+mcp-name: io.github.sGuNk13/kuriflow-mcp
+
 # Kuriflow MCP Server
 
-**Claude solves tasks once. Kuriflow makes them repeat.**
+**AI solves tasks once. Kuriflow makes them repeat.**
 
-Stop spending AI tokens on the same task every week. Let Claude solve it once, then Kuriflow runs it automatically with new data — via email, Google Drive, or schedule. Zero token cost per run.
+Stop spending AI tokens on the same task every week. Let your AI agent solve it once, then Kuriflow runs it automatically with new data — via email, Google Drive, or schedule. Zero token cost per run.
 
 ## Quick Start
 
@@ -48,12 +50,12 @@ Connect to our hosted server — no installation needed.
 
 ## How It Works
 
-1. Ask Claude to solve a task. For example:
+1. Ask your AI agent (Claude, Gemini, ChatGPT, or any MCP-compatible client) to solve a task. For example:
    - "Analyze this sales data and create a dashboard with charts"
    - "Build a DCF model from the financial statement fetched from my Google Drive"
    - "Generate a monthly expense report from this spreadsheet using our template"
-2. Claude gives the solution.
-3. You ask Claude to save it as a repeatable workflow with Kuriflow.
+2. The AI gives the solution.
+3. You ask the AI to save it as a repeatable workflow with Kuriflow.
 4. Choose how new data arrives:
    - **Email trigger** — Kuriflow watches your Gmail. When someone sends an attachment, the workflow runs automatically.
    - **Google Drive** — Kuriflow checks a Drive folder on your schedule (hourly, daily, weekly). New file? Workflow runs.
@@ -66,7 +68,7 @@ You can also provide template files (.docx, .xlsx, .pptx) so Kuriflow fills them
 
 | Tool | Description |
 |------|-------------|
-| `save_workflow` | Save Claude's solution as a repeatable workflow |
+| `save_workflow` | Save the AI's solution as a repeatable workflow |
 | `run_workflow` | Run it again with new data |
 | `list_workflows` | See your saved workflows |
 | `list_kuris` | Browse available workflow types |
@@ -77,9 +79,9 @@ You can also provide template files (.docx, .xlsx, .pptx) so Kuriflow fills them
 
 ## Why Kuriflow?
 
-| | Claude alone | Claude + Kuriflow |
+| | AI alone | AI + Kuriflow |
 |---|---|---|
-| First time | Claude solves it | Claude solves it |
+| First time | AI solves it | AI solves it |
 | Every repeat | Tokens burned again | Runs with new data, no tokens |
 | Monthly cost | Grows with every repeat | Fixed after setup |
 | Your tokens | Spent on routine | Saved for what matters |
