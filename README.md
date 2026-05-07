@@ -8,9 +8,22 @@ Stop spending AI tokens on the same task every week. Let your AI agent solve it 
 
 ## Quick Start
 
-### Option 1: Remote (recommended)
+### Option 1: Claude Cowork — one-click OAuth (recommended)
 
-Connect to our hosted server — no installation needed.
+If you use [Claude Cowork](https://claude.ai/cowork) (Pro or Max plan):
+
+1. **Settings → Connectors → Add custom connector**
+2. Paste the server URL: `https://mcp.kuriflow.com`
+3. Click **Connect**
+4. Sign in with Google (Kuriflow uses your Google account — no separate signup)
+5. Click **Allow** on the consent screen
+
+Tools become available in any new chat. Zero copy-paste, zero JSON.
+
+### Option 2: Remote with API key
+
+For Claude Desktop or any client that supports raw remote MCP servers
+with bearer auth. Edit your client's MCP config:
 
 ```json
 {
@@ -25,7 +38,7 @@ Connect to our hosted server — no installation needed.
 }
 ```
 
-### Option 2: Local
+### Option 3: Local install (uvx)
 
 ```json
 {
@@ -42,7 +55,9 @@ Connect to our hosted server — no installation needed.
 }
 ```
 
-## Get Your API Key
+## Get Your API Key (Options 2 & 3 only)
+
+> Option 1 (Cowork OAuth) does NOT require an API key — skip this section.
 
 1. Sign up at [kuriflow.com/signup](https://kuriflow.com/signup) (30 seconds, Google account)
 2. Copy your API key from the onboarding page

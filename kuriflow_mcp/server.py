@@ -38,6 +38,11 @@ SIGNUP_MESSAGE = (
 )
 
 API_URL = os.environ.get("KURIFLOW_API_URL", "https://api.kuriflow.com").rstrip("/")
+# Public URL of THIS MCP server. Used as resource_server_url in the
+# RFC 9728 discovery payload so OAuth clients (Cowork, etc.) know which
+# resource they're authenticating against. Defaults to the prod hosted
+# server; override with MCP_SERVER_URL when self-hosting.
+MCP_SERVER_URL = os.environ.get("MCP_SERVER_URL", "https://mcp.kuriflow.com").rstrip("/")
 
 
 def _check_auth() -> Optional[str]:
@@ -97,8 +102,13 @@ if _transport != "stdio":
     from mcp.server.auth.settings import AuthSettings
     _server_kwargs["token_verifier"] = KuriflowTokenVerifier()
     _server_kwargs["auth"] = AuthSettings(
+        # OAuth 2.1 authorization server — hosts /oauth/authorize,
+        # /oauth/token, /.well-known/oauth-authorization-server.
         issuer_url=API_URL,
-        resource_server_url=API_URL,
+        # The protected resource — this MCP server itself. RFC 9728
+        # identifies the resource; the auth server is referenced via
+        # `authorization_servers` in the protected-resource metadata.
+        resource_server_url=MCP_SERVER_URL,
     )
 
 mcp = FastMCP(
