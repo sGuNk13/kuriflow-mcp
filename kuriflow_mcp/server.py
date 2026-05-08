@@ -121,6 +121,11 @@ if _transport != "stdio":
 mcp = FastMCP(
     "Kuriflow",
     **_server_kwargs,
+    # Mount the streamable-http MCP endpoint at the root path so users can
+    # paste the bare URL (https://mcp.kuriflow.com) into their MCP client
+    # rather than the awkward "https://mcp.kuriflow.com/mcp". The default
+    # FastMCP path is "/mcp" — we override to "/".
+    streamable_http_path="/",
     instructions=(
         "# Kuriflow — Make AI Tasks Repeatable\n\n"
         "Kuriflow saves scripts as workflows that run automatically with new data. "
