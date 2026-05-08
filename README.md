@@ -60,7 +60,7 @@ with bearer auth. Edit your client's MCP config:
 > Option 1 (Cowork OAuth) does NOT require an API key — skip this section.
 
 1. Sign up at [kuriflow.com/signup](https://kuriflow.com/signup) (30 seconds, Google account)
-2. Copy your API key from the onboarding page
+2. Open **Settings → API Keys** in your dashboard, click **Generate**, and copy the shown key — it's displayed only once
 3. Add it to your config above
 
 ## How It Works
