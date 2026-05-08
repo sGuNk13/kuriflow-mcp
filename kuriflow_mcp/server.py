@@ -69,16 +69,23 @@ class KuriflowTokenVerifier:
     """
 
     async def verify_token(self, token: str):
-        """Verify a kf_ API key by calling the backend /auth/me endpoint."""
+        """Verify a Kuriflow Bearer token by calling the backend /auth/me.
+
+        Accepts both:
+          - kf_*       — per-user API keys (manual generation)
+          - kfo_at_*   — OAuth 2.1 access tokens (issued via /oauth/token
+                          to MCP clients like Cowork)
+        Anything else is rejected without a backend round-trip.
+        """
         from mcp.server.auth.provider import AccessToken
 
-        if not token.startswith("kf_"):
+        if not (token.startswith("kf_") or token.startswith("kfo_at_")):
             return None
 
         try:
             async with httpx.AsyncClient(timeout=10.0) as client:
                 resp = await client.get(
-                    f"{API_URL}/api/v1/auth/me",
+                    f"{API_URL}/auth/me",
                     headers={"Authorization": f"Bearer {token}"},
                 )
                 if resp.status_code == 200:
